@@ -3,7 +3,7 @@
 //! [Groth16]: https://eprint.iacr.org/2016/260
 
 #[cfg(test)]
-mod tests;
+pub mod tests;
 
 mod ext;
 mod generator;
