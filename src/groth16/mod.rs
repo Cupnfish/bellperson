@@ -2,7 +2,7 @@
 //!
 //! [Groth16]: https://eprint.iacr.org/2016/260
 
-#[cfg(test)]
+
 pub mod tests;
 
 mod ext;
