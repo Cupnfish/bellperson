@@ -94,6 +94,7 @@ where
             deg,
             max_deg
         )?;
+
         Ok(())
     }
 
@@ -123,6 +124,41 @@ where
 
         Ok(())
     }
+    fn gpu_setup_pq_omegas(
+        &mut self,
+        omega: &E::Fr,
+        n: usize,
+        max_deg: u32,
+        deg: u32,
+    ) -> GPUResult<()> {
+        let mut omegas = vec![E::Fr::zero(); 32];
+        omegas[0] = *omega;
+        self.omegas_buffer.write_from(0, &omegas)?;
+
+        if locks::PriorityLock::should_break(self.priority) {
+            return Err(GPUError::GPUTaken);
+        }
+
+        let local_work_size = 1 << cmp::min(deg - 1, MAX_LOG2_LOCAL_WORK_SIZE);
+        let global_work_size = (n >> deg) * local_work_size;
+
+        let kernel = self.program.create_kernel(
+            "setup_pq_omegas",
+            global_work_size as usize,
+            Some(local_work_size as usize),
+        );
+
+        call_kernel!(
+            kernel,
+            &self.pq_buffer,
+            &self.omegas_buffer,
+            LOG2_MAX_ELEMENTS,
+            n,
+            max_deg
+        )?;
+
+        Ok(())
+    }
 
     /// Performs FFT on `a`
     /// * `omega` - Special value `omega` is used for FFT over finite-fields
@@ -133,11 +169,15 @@ where
         let mut dst_buffer = self.program.create_buffer::<E::Fr>(n)?;
 
         let max_deg = cmp::min(MAX_LOG2_RADIX, log_n);
-        self.setup_pq_omegas(omega, n, max_deg)?;
+        // self.setup_pq_omegas(omega, n, max_deg)?;// 这部分预先装备的值要转移到GPU中去处理
+
+        self.gpu_setup_pq_omegas(omega, n, max_deg, max_deg.min(log_n))?;
 
         src_buffer.write_from(0, &*a)?;
+
         let mut log_p = 0u32;
         while log_p < log_n {
+            // 这里是循环，然后重复每一轮，现在需要改成一轮完成所有计算
             let deg = cmp::min(max_deg, log_n - log_p);
             self.radix_fft_round(&src_buffer, &dst_buffer, log_n, log_p, deg, max_deg)?;
             log_p += deg;

@@ -74,3 +74,23 @@ __kernel void mul_by_field(__global FIELD* elements,
   const uint gid = get_global_id(0);
   elements[gid] = FIELD_mul(elements[gid], field);
 }
+
+__kernel void setup_pa_omegas(__global FIELD* pq, // Precalculated twiddle factors
+                              __global FIELD* omegas,// [omega, omega^2, omega^4, ...]
+                              unit max_elements //
+                              nuit n,
+                              unit max_deg) {
+  pq[0] = 1;
+  if (max_deg > 1) {
+    twiddle = omegas[0].pow(n>>max_deg);
+    pq[1] = twiddle;
+    limit = 1<<max_deg>>1;
+    for(unit i = 2;i<limit;i++) {
+      pq[i] = pq[i-1] * twiddle;
+    }
+  }
+  for(uint i = 1;i<max_elements;i++) {
+    omegas[i] = omegas[i-1].pow(2);
+  }
+}
+

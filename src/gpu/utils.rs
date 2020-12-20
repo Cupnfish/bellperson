@@ -37,6 +37,7 @@ lazy_static::lazy_static! {
             ("GeForce GTX 1060".to_string(), 1280),
             ("GeForce GTX 1650 SUPER".to_string(), 1280),
             ("GeForce GTX 1650".to_string(), 896),
+            ("GeForce GTX 1050 Ti".to_string(), 768),
         ].into_iter().collect();
 
         match env::var("BELLMAN_CUSTOM_GPU").and_then(|var| {
