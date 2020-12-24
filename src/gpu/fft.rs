@@ -106,20 +106,45 @@ where
         pq[0] = E::Fr::one();
         if max_deg > 1 {
             pq[1] = twiddle;
-            for i in 2..(1 << max_deg >> 1) {
-                pq[i] = pq[i - 1];
-                pq[i].mul_assign(&twiddle);
-            }
+            self.pq_buffer.write_from(0, &pq)?;
+            // TODO:
+            let pq_local_work_size = 1 << cmp::min(1<<max_deg>>1 -1, MAX_LOG2_LOCAL_WORK_SIZE);
+            let pq_global_work_size = (n >> max_deg) * pq_local_work_size;
+            let pq_kernel = self.program.create_kernel(
+                "setup_pq",
+                pq_global_work_size as usize,
+                Some(pq_local_work_size as usize),
+            );
+            call_kernel!(
+                pq_kernel,
+                &self.pq_buffer,
+                max_deg
+            )?;
+        }else {
+            self.pq_buffer.write_from(0, &pq)?;
         }
-        self.pq_buffer.write_from(0, &pq)?;
+        // self.pq_buffer.write_from(0, &pq)?;
 
         // Precalculate [omega, omega^2, omega^4, omega^8, ..., omega^(2^31)]
         let mut omegas = vec![E::Fr::zero(); 32];
         omegas[0] = *omega;
-        for i in 1..LOG2_MAX_ELEMENTS {
-            omegas[i] = omegas[i - 1].pow([2u64]);
-        }
+        // for i in 1..LOG2_MAX_ELEMENTS {
+        //     omegas[i] = omegas[i - 1].pow([2u64]);
+        // }
         self.omegas_buffer.write_from(0, &omegas)?;
+        // TODO:
+        let omega_local_work_size = 1 << cmp::min(LOG2_MAX_ELEMENTS -1, MAX_LOG2_LOCAL_WORK_SIZE);
+        let omega_global_work_size = (n >> max_deg) * omega_local_work_size;
+        let omega_kernel = self.program.create_kernel(
+            "setup_omegas",
+            omega_global_work_size as usize,
+            Some(omega_local_work_size as usize),
+        );
+        call_kernel!(
+            pq_kernel,
+            &self.omegas_buffer,
+            LOG2_MAX_ELEMENTS
+        )?;
 
         Ok(())
     }
