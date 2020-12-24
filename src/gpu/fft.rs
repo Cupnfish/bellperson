@@ -140,10 +140,11 @@ where
             omega_global_work_size as usize,
             Some(omega_local_work_size as usize),
         );
+        let max_element = LOG2_MAX_ELEMENTS as u32;
         call_kernel!(
             omega_kernel,
             &self.omegas_buffer,
-            LOG2_MAX_ELEMENTS
+            max_element
         )?;
 
         Ok(())

@@ -82,7 +82,7 @@ __kernel void setup_pq(__global FIELD* pq, // Precalculated twiddle factors
   }
 }
 __kernel void setup_omegas(__global FIELD* omegas,// [omega, omega^2, omega^4, ...]
-                          uint max_element,) // Max number of elements
+                          uint max_element) // Max number of elements
 {
     for(uint i = 1; i < max_element; i++) {
       omegas[i] = FIELD_pow(omegas[i-1], 2);
