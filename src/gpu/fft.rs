@@ -63,17 +63,17 @@ where
     /// * `max_deg` - The precalculated values pq` and `omegas` are valid for radix degrees up to `max_deg`
     fn radix_fft_round(
         &mut self,
+        nums:Vec<u32>,
         src_buffer: &opencl::Buffer<E::Fr>,
         dst_buffer: &opencl::Buffer<E::Fr>,
         log_n: u32,
-        log_p: u32,
-        deg: u32,
+        len: u32,
         max_deg: u32,
     ) -> GPUResult<()> {
         if locks::PriorityLock::should_break(self.priority) {
             return Err(GPUError::GPUTaken);
         }
-
+        let deg:u32 = nums.iter().sum();
         let n = 1u32 << log_n;
         let local_work_size = 1 << cmp::min(deg - 1, MAX_LOG2_LOCAL_WORK_SIZE);
         let global_work_size = (n >> deg) * local_work_size;
@@ -84,14 +84,14 @@ where
         );
         call_kernel!(
             kernel,
+            nums,
             src_buffer,
             dst_buffer,
             &self.pq_buffer,
             &self.omegas_buffer,
             opencl::LocalBuffer::<E::Fr>::new(1 << deg),
             n,
-            log_p,
-            deg,
+            len,
             max_deg
         )?;
         Ok(())
@@ -107,6 +107,7 @@ where
         if max_deg > 1 {
             pq[1] = twiddle;
             for i in 2..(1 << max_deg >> 1) {
+                // 这部分都是需要同步的，所以本省不适合并行化，也就是不需要把此处移动到GPU去
                 pq[i] = pq[i - 1];
                 pq[i].mul_assign(&twiddle);
             }
@@ -137,12 +138,19 @@ where
 
         src_buffer.write_from(0, &*a)?;
         let mut log_p = 0u32;
+        // 需要动刀的是这部分，这部分代码应该改成生成一个kernel，然后直接调用单个kernel即可
+        // 这里就是所谓的多轮，需要改动成一整个去运行，即直接生成一个kernel
+        let nums = vec![];
         while log_p < log_n {
             let deg = cmp::min(max_deg, log_n - log_p);
-            self.radix_fft_round(&src_buffer, &dst_buffer, log_n, log_p, deg, max_deg)?;
+            nums.push(log_p);
+            //self.radix_fft_round(&src_buffer, &dst_buffer, log_n, log_p, deg, max_deg)?;
             log_p += deg;
-            std::mem::swap(&mut src_buffer, &mut dst_buffer);
+            //std::mem::swap(&mut src_buffer, &mut dst_buffer);
         }
+        let len = nums.len();
+        self.radix_fft_round(nums,&src_buffer, &dst_buffer, log_n, len as u32, max_deg)?;
+        //std::mem::swap(&mut src_buffer, &mut dst_buffer);
 
         src_buffer.read_into(0, a)?;
 
