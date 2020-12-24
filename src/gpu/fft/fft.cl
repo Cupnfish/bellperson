@@ -78,7 +78,7 @@ __kernel void setup_pq(__global FIELD* pq, // Precalculated twiddle factors
                               uint max_deg) // Maximum degree supported, according to `pq` and `omegas`
 {
   for(uint i = 2; i < (1 << max_deg >> 1); i++) {
-    pq[i] = pq[i-1] * pq[1];
+    pq[i] = FIELD_mul(pq[i-1], pq[1]);
   }
 }
 __kernel void setup_omegas(__global FIELD* omegas,// [omega, omega^2, omega^4, ...]
