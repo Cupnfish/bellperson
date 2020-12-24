@@ -133,7 +133,7 @@ where
         // }
         self.omegas_buffer.write_from(0, &omegas)?;
         // TODO:
-        let omega_local_work_size = 1 << cmp::min(LOG2_MAX_ELEMENTS -1, MAX_LOG2_LOCAL_WORK_SIZE);
+        let omega_local_work_size = 1 << cmp::min(LOG2_MAX_ELEMENTS -1, MAX_LOG2_LOCAL_WORK_SIZE as usize);
         let omega_global_work_size = (n >> max_deg) * omega_local_work_size;
         let omega_kernel = self.program.create_kernel(
             "setup_omegas",
@@ -141,7 +141,7 @@ where
             Some(omega_local_work_size as usize),
         );
         call_kernel!(
-            pq_kernel,
+            omega_kernel,
             &self.omegas_buffer,
             LOG2_MAX_ELEMENTS
         )?;
