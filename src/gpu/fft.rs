@@ -141,7 +141,7 @@ where
         let mut log_p = 0u32;
         // 需要动刀的是这部分，这部分代码应该改成生成一个kernel，然后直接调用单个kernel即可
         // 这里就是所谓的多轮，需要改动成一整个去运行，即直接生成一个kernel
-        let nums = vec![];
+        let mut nums = vec![];
         while log_p < log_n {
             let deg = cmp::min(max_deg, log_n - log_p);
             nums.push(log_p);
