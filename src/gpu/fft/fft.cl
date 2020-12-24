@@ -28,7 +28,7 @@ __kernel void radix_fft(__global uint* nums,
   uint deg = nums[index+1];
   uint lgp = nums[index];
 
-  if (index%2 != 0) {
+  if (index%2 == 0) {
     temp = x;
     x = y;
     y = temp;
