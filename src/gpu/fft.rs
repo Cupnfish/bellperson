@@ -92,7 +92,7 @@ where
             dst_buffer,
             &self.pq_buffer,
             &self.omegas_buffer,
-            opencl::LocalBuffer::<E::Fr>::new(1 << deg),
+            opencl::LocalBuffer::<E::Fr>::new(1 << len),
             n,
             len,
             max_deg
