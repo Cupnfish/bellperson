@@ -82,9 +82,10 @@ where
             global_work_size as usize,
             Some(local_work_size as usize),
         );
+        let mut nums_buffer = self.program.create_buffer::<u32>(len)?;
         call_kernel!(
             kernel,
-            nums,
+            nums_buffer,
             src_buffer,
             dst_buffer,
             &self.pq_buffer,
