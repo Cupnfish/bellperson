@@ -11,6 +11,7 @@ uint bitreverse(uint n, uint bits) {
  * FFT algorithm is inspired from: http://www.bealto.com/gpu-fft_group-1.html
  */
 __kernel void radix_fft(__global uint* nums,
+                        __global FIELD* temp,
                         __global FIELD* x, // Source buffer
                         __global FIELD* y, // Destination buffer
                         __global FIELD* pq, // Precalculated twiddle factors
@@ -28,11 +29,11 @@ __kernel void radix_fft(__global uint* nums,
   uint lgp = nums[index];
 
   if (index%2 != 0) {
-    FIELD* temp = x;
+    temp = x;
     x = y;
     y = temp;
   }
-  
+
   uint t = n >> deg;
   uint p = 1 << lgp;
   uint k = index & (p - 1);

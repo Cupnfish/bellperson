@@ -64,6 +64,7 @@ where
     fn radix_fft_round(
         &mut self,
         nums:Vec<u32>,
+        temp_buffer:&opencl::Buffer<E::Fr>,
         src_buffer: &opencl::Buffer<E::Fr>,
         dst_buffer: &opencl::Buffer<E::Fr>,
         log_n: u32,
@@ -86,6 +87,7 @@ where
         call_kernel!(
             kernel,
             &nums_buffer,
+            temp_buffer,
             src_buffer,
             dst_buffer,
             &self.pq_buffer,
@@ -133,6 +135,7 @@ where
         let n = 1 << log_n;
         let mut src_buffer = self.program.create_buffer::<E::Fr>(n)?;
         let mut dst_buffer = self.program.create_buffer::<E::Fr>(n)?;
+        let mut temp_buffer = self.program.create_buffer::<E::Fr>(n)?;
 
         let max_deg = cmp::min(MAX_LOG2_RADIX, log_n);
         self.setup_pq_omegas(omega, n, max_deg)?;
@@ -150,7 +153,7 @@ where
             //std::mem::swap(&mut src_buffer, &mut dst_buffer);
         }
         let len = nums.len();
-        self.radix_fft_round(nums,&src_buffer, &dst_buffer, log_n, len as u32, max_deg)?;
+        self.radix_fft_round(nums,&temp_buffer,&src_buffer, &dst_buffer, log_n, len as u32, max_deg)?;
         //std::mem::swap(&mut src_buffer, &mut dst_buffer);
 
         src_buffer.read_into(0, a)?;
