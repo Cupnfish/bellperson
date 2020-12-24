@@ -74,10 +74,10 @@ where
         if locks::PriorityLock::should_break(self.priority) {
             return Err(GPUError::GPUTaken);
         }
-        let deg:u32 = nums.iter().sum();
+        
         let n = 1u32 << log_n;
-        let local_work_size = 1 << cmp::min(deg - 1, MAX_LOG2_LOCAL_WORK_SIZE);
-        let global_work_size = (n >> deg) * local_work_size;
+        let local_work_size = 1 << cmp::min(len - 1, MAX_LOG2_LOCAL_WORK_SIZE);
+        let global_work_size = (n >> len) * local_work_size;
         let kernel = self.program.create_kernel(
             "radix_fft",
             global_work_size as usize,
