@@ -76,14 +76,15 @@ where
         }
         
         let n = 1u32 << log_n;
-        let local_work_size = 1 << cmp::min(max_deg - 1, MAX_LOG2_LOCAL_WORK_SIZE);
-        let global_work_size = (n >> max_deg) * local_work_size;
+        let local_work_size = 1 << cmp::min(len - 1, MAX_LOG2_LOCAL_WORK_SIZE);
+        let global_work_size = (n >> len) * local_work_size;
         let kernel = self.program.create_kernel(
             "radix_fft",
             global_work_size as usize,
             Some(local_work_size as usize),
         );
         let mut nums_buffer = self.program.create_buffer::<u32>(len as usize)?;
+        let temp_deg = nums[len as usize -1];
         nums_buffer.write_from(0, &nums)?;
         call_kernel!(
             kernel,
@@ -96,6 +97,7 @@ where
             opencl::LocalBuffer::<E::Fr>::new(1 << max_deg),
             n,
             len,
+            temp_deg,
             max_deg
         )?;
         Ok(())
