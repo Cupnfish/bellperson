@@ -92,7 +92,7 @@ __kernel void radix_fft_whole(__global FIELD* x, // Source buffer
   log_ps += index;
 
   uint deg = *degs;
-  uint log_p = *log_ps;
+  uint lgp = *log_ps;
 
   uint t = n >> deg;
   uint p = 1 << lgp;
