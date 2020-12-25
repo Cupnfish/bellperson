@@ -26,7 +26,12 @@ __kernel void radix_fft(__global uint* nums,
   uint lid = get_local_id(0);
   uint lsize = get_local_size(0);
   uint index = get_group_id(0);
-  uint lgp = nums[index];
+
+  uint lgp = 0;
+  
+  if (index<len) {
+    lgp = nums[index];
+  }
   uint deg = max_deg;
   if (lgp/max_deg==len) {
     deg = temp_deg;
