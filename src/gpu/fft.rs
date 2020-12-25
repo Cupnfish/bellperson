@@ -131,21 +131,65 @@ where
         let n = 1 << log_n;
         let mut src_buffer = self.program.create_buffer::<E::Fr>(n)?;
         let mut dst_buffer = self.program.create_buffer::<E::Fr>(n)?;
-
         let max_deg = cmp::min(MAX_LOG2_RADIX, log_n);
         self.setup_pq_omegas(omega, n, max_deg)?;
 
         src_buffer.write_from(0, &*a)?;
         let mut log_p = 0u32;
+        let mut degs = vec![];
+        let mut log_ps = vec![];
         while log_p < log_n {
             let deg = cmp::min(max_deg, log_n - log_p);
-            self.radix_fft_round(&src_buffer, &dst_buffer, log_n, log_p, deg, max_deg)?;
+            // self.radix_fft_round(&src_buffer, &dst_buffer, log_n, log_p, deg, max_deg)?;
+            degs.push(deg);
+            log_ps.push(log_p);
             log_p += deg;
-            std::mem::swap(&mut src_buffer, &mut dst_buffer);
+            //std::mem::swap(&mut src_buffer, &mut dst_buffer);
         }
+        let mut degs_buffer = self.program.create_buffer::<u32>(degs.len() as u32)?;
+        let mut log_ps_buffer = self.program.create_buffer::<u32>(log_ps.len() as u32)?;
 
+        degs_buffer.write_from(0,&degs)?;
+        log_ps_buffer.write_from(0,&log_ps)?;
+        self.radix_fft_whole(&src_buffer, &dst_buffer,&degs_buffer,&log_ps_buffer,log_p,log_n, max_deg)?;
         src_buffer.read_into(0, a)?;
 
+        Ok(())
+    }
+    fn radix_fft_whole(
+        &mut self,
+        src_buffer: &opencl::Buffer<E::Fr>,
+        dst_buffer: &opencl::Buffer<E::Fr>,
+        degs_buffer: &opencl::Buffer<u32>,
+        log_ps_buffer: &opencl::Buffer<u32>,
+        max_log_p: u32,
+        log_n: u32,
+        max_deg: u32,
+    ) -> GPUResult<()> {
+        if locks::PriorityLock::should_break(self.priority) {
+            return Err(GPUError::GPUTaken);
+        }
+
+        let n = 1u32 << log_n;
+        let local_work_size = 1 << cmp::min(max_log_p - 1, MAX_LOG2_LOCAL_WORK_SIZE);
+        let global_work_size = (n >> max_log_p) * local_work_size;
+        let kernel = self.program.create_kernel(
+            "radix_fft_whole",
+            global_work_size as usize,
+            Some(local_work_size as usize),
+        );
+        call_kernel!(
+            kernel,
+            src_buffer,
+            dst_buffer,
+            &self.pq_buffer,
+            &self.omegas_buffer,
+            degs_buffer,
+            log_ps_buffer,
+            opencl::LocalBuffer::<E::Fr>::new(1 << deg),
+            n,
+            max_deg
+        )?;
         Ok(())
     }
 }
