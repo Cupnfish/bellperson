@@ -39,7 +39,7 @@ __kernel void radix_fft(__global uint* nums,
   
 
 
-  if ((lgp/max_deg)%2 == 1) {
+  if (lgp != 0) {
     temp = x;
     x = y;
     y = temp;
