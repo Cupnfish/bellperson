@@ -146,8 +146,8 @@ where
             log_p += deg;
             //std::mem::swap(&mut src_buffer, &mut dst_buffer);
         }
-        let mut degs_buffer = self.program.create_buffer::<u32>(degs.len() as u32)?;
-        let mut log_ps_buffer = self.program.create_buffer::<u32>(log_ps.len() as u32)?;
+        let mut degs_buffer = self.program.create_buffer::<u32>(degs.len())?;
+        let mut log_ps_buffer = self.program.create_buffer::<u32>(log_ps.len())?;
 
         degs_buffer.write_from(0,&degs)?;
         log_ps_buffer.write_from(0,&log_ps)?;
@@ -186,7 +186,7 @@ where
             &self.omegas_buffer,
             degs_buffer,
             log_ps_buffer,
-            opencl::LocalBuffer::<E::Fr>::new(1 << deg),
+            opencl::LocalBuffer::<E::Fr>::new(1 << max_log_p),
             n,
             max_deg
         )?;
