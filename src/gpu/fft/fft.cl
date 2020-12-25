@@ -88,11 +88,8 @@ __kernel void radix_fft_whole(__global FIELD* x, // Source buffer
   uint lsize = get_local_size(0);
   uint index = get_group_id(0);
 
-  degs += index;
-  log_ps += index;
-
-  uint deg = *degs;
-  uint lgp = *log_ps;
+  uint deg = *(degs + index);
+  uint lgp = *(log_ps + index);
 
   uint t = n >> deg;
   uint p = 1 << lgp;
