@@ -19,16 +19,23 @@ __kernel void radix_fft(__global uint* nums,
                         __local FIELD* u, // Local buffer to store intermediary values
                         uint n, // Number of elements
                         uint len, // 1=>radix2, 2=>radix4, 3=>radix8, ...
+                        uint temp_deg,
                         uint max_deg) // Maximum degree supported, according to `pq` and `omegas`
 {
 
   uint lid = get_local_id(0);
   uint lsize = get_local_size(0);
   uint index = get_group_id(0);
-  uint deg = nums[index+1];
-  uint lgp = nums[index];
+    uint lgp = nums[index];
+  if (lgp/max_deg==len) {
+    uint deg = temp_deg;
+  }else {
+    uint deg = max_deg;
+  }
+  
 
-  if (index%2 == 0) {
+
+  if ((lgp/max_deg)%2 == 1) {
     temp = x;
     x = y;
     y = temp;
