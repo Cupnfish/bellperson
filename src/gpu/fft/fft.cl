@@ -84,12 +84,14 @@ __kernel void radix_fft_whole(__global FIELD* x, // Source buffer
                         uint n, // Number of elements
                         uint max_deg) // Maximum degree supported, according to `pq` and `omegas`
 {
-  uint lid = get_local_id(0);
-  uint lsize = get_local_size(0);
-  uint index = get_group_id(0);
+  uint dim = get_work_dim();
+  uint lid = get_local_id(dim);
+  uint lsize = get_local_size(dim);
+  uint index = get_group_id(dim);
+  uint global_idx = get_global_id(dim);
 
-  uint deg = *(degs + index);
-  uint lgp = *(log_ps + index);
+  uint deg = *(degs + global_idx/max_deg);
+  uint lgp = *(log_ps + global_idx/max_deg);
 
   uint t = n >> deg;
   uint p = 1 << lgp;
