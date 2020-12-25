@@ -78,8 +78,8 @@ __kernel void radix_fft_whole(__global FIELD* x, // Source buffer
                         __global FIELD* y, // Destination buffer
                         __global FIELD* pq, // Precalculated twiddle factors
                         __global FIELD* omegas, // [omega, omega^2, omega^4, ...]
-                        __global uint* deg, // [1,2,3,4...]
-                        __global uint* log_p, //Log2 of `p` (Read more in the link above)
+                        __global uint* degs, // [1,2,3,4...]
+                        __global uint* log_ps, //Log2 of `p` (Read more in the link above)
                         __local FIELD* u, // Local buffer to store intermediary values
                         uint n, // Number of elements
                         uint max_deg) // Maximum degree supported, according to `pq` and `omegas`
@@ -88,8 +88,11 @@ __kernel void radix_fft_whole(__global FIELD* x, // Source buffer
   uint lsize = get_local_size(0);
   uint index = get_group_id(0);
 
-  deg += index;
-  log_p += index;
+  degs += index;
+  log_ps += index;
+
+  uint deg = *degs;
+  uint log_p = *log_p;
   
   uint t = n >> deg;
   uint p = 1 << lgp;
