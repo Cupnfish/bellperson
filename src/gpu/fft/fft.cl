@@ -44,6 +44,7 @@ __kernel void radix_fft(__global uint* nums,
     x = y;
     y = temp;
   }
+  barrier(CLK_LOCAL_MEM_FENCE);
 
   uint t = n >> deg;
   uint p = 1 << lgp;
